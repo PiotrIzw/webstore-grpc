@@ -5,6 +5,7 @@ package account;
 option go_package= "github.com/PiotrIzw/webstore-grcp/internal/pb";
 
 service AccountService {
+  rpc Login (LoginRequest) returns (LoginResponse);
   rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse);
   rpc GetAccount (GetAccountRequest) returns (GetAccountResponse);
   rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse);
@@ -52,4 +53,13 @@ message DeleteAccountRequest {
 message DeleteAccountResponse {
   bool success = 1;
 
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
 }

@@ -11,6 +11,7 @@ type AccountRepository interface {
 	GetAccount(id string) (*account.Account, error)
 	UpdateAccount(acc *account.Account) error
 	DeleteAccount(id string) error
+	GetAccountByUsername(username string) (*account.Account, error)
 }
 
 type AccountRepositoryImpl struct {
@@ -56,4 +57,17 @@ func (r *AccountRepositoryImpl) DeleteAccount(id string) error {
 	query := `DELETE FROM accounts WHERE id = $1`
 	_, err := r.db.Exec(query, id)
 	return err
+}
+
+func (r *AccountRepositoryImpl) GetAccountByUsername(username string) (*account.Account, error) {
+	var acc account.Account
+	query := `SELECT id, username, hashed_password FROM accounts WHERE username = $1`
+	err := r.db.QueryRow(query, username).Scan(&acc.ID, &acc.Username, &acc.HashedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Account not found
+		}
+		return nil, err
+	}
+	return &acc, nil
 }

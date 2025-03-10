@@ -6,17 +6,24 @@ import (
 	"github.com/PiotrIzw/webstore-grcp/internal/account"
 	"github.com/PiotrIzw/webstore-grcp/internal/pb"
 	"github.com/PiotrIzw/webstore-grcp/internal/repository"
+	"github.com/PiotrIzw/webstore-grcp/pkg/auth"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"time"
 )
 
 type AccountService struct {
-	repo repository.AccountRepository
+	repo         repository.AccountRepository
+	rolesService *RolesService
 	pb.UnimplementedAccountServiceServer
 }
 
-func NewAccountService(repo repository.AccountRepository) *AccountService {
-	return &AccountService{repo: repo}
+func NewAccountService(repo repository.AccountRepository, rolesService *RolesService) *AccountService {
+	return &AccountService{
+		repo:         repo,
+		rolesService: rolesService, // Inject RolesService
+	}
 }
 
 // CreateAccount creates a new account.
@@ -46,14 +53,19 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *pb.CreateAccoun
 	return &pb.CreateAccountResponse{AccountId: acc.ID}, nil
 }
 
-// GetAccount retrieves an account by ID.
 func (s *AccountService) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*pb.GetAccountResponse, error) {
-	acc, err := s.repo.GetAccount(req.AccountId)
-	if err != nil {
+	// Authorize the request using the injected RolesService
+	if err := Authorize(ctx, s.rolesService, "accounts:read"); err != nil {
 		return nil, err
 	}
+
+	// Proceed with the method logic
+	acc, err := s.repo.GetAccount(req.AccountId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get account: %v", err)
+	}
 	if acc == nil {
-		return nil, errors.New("account not found")
+		return nil, status.Errorf(codes.NotFound, "account not found")
 	}
 
 	return &pb.GetAccountResponse{
@@ -95,4 +107,29 @@ func (s *AccountService) DeleteAccount(ctx context.Context, req *pb.DeleteAccoun
 		return nil, err
 	}
 	return &pb.DeleteAccountResponse{Success: true}, nil
+}
+
+func (s *AccountService) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	// Fetch the account from the database
+	acc, err := s.repo.GetAccountByUsername(req.Username)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to fetch account: %v", err)
+	}
+	if acc == nil {
+		return nil, status.Errorf(codes.NotFound, "account not found")
+	}
+
+	// Verify the password
+	if err := bcrypt.CompareHashAndPassword([]byte(acc.HashedPassword), []byte(req.Password)); err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid password")
+	}
+
+	// Generate a JWT token
+	token, err := auth.GenerateToken(acc.ID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to generate token: %v", err)
+	}
+
+	// Return the token
+	return &pb.LoginResponse{Token: token}, nil
 }

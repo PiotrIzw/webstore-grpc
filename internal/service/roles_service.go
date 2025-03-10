@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/PiotrIzw/webstore-grcp/internal/pb"
 	"github.com/PiotrIzw/webstore-grcp/internal/repository"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type RolesService struct {
@@ -23,10 +25,19 @@ func (s *RolesService) AssignRole(ctx context.Context, req *pb.AssignRoleRequest
 	return &pb.AssignRoleResponse{Success: true}, nil
 }
 
-func (s *RolesService) CheckPermission(ctx context.Context, req *pb.CheckPermissionRequest) (*pb.CheckPermissionResponse, error) {
-	allowed, err := s.repo.CheckPermission(req.UserId, req.Permission)
-	if err != nil {
-		return nil, err
+func Authorize(ctx context.Context, rolesService *RolesService, permission string) error {
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok {
+		return status.Errorf(codes.Unauthenticated, "user ID not found in context")
 	}
-	return &pb.CheckPermissionResponse{Allowed: allowed}, nil
+
+	allowed, err := rolesService.repo.CheckPermission(userID, permission)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to check permission: %v", err)
+	}
+	if !allowed {
+		return status.Errorf(codes.PermissionDenied, "user does not have permission: %s", permission)
+	}
+
+	return nil
 }

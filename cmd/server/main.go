@@ -15,23 +15,27 @@ func main() {
 	database.ConnectDB()
 
 	db := database.DB
+
+	rolesRepo := repository.NewRolesRepository(db)
+	rolesService := service.NewRolesService(rolesRepo)
+
 	accountRepo := repository.NewAccountRepository(db)
-	accountService := service.NewAccountService(accountRepo)
+	accountService := service.NewAccountService(accountRepo, rolesService)
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(middleware.LoggingInterceptor))
+	authInterceptor := middleware.AuthInterceptor(rolesService)
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor))
 	pb.RegisterAccountServiceServer(grpcServer, accountService)
 
 	preferencesRepo := repository.NewPreferencesRepository(db)
 	preferencesService := service.NewPreferencesService(preferencesRepo)
 	pb.RegisterPreferencesServiceServer(grpcServer, preferencesService)
 
-	rolesRepo := repository.NewRolesRepository(db)
-	rolesService := service.NewRolesService(rolesRepo)
 	pb.RegisterRolesServiceServer(grpcServer, rolesService)
 
 	ordersRepo := repository.NewOrdersRepository(db)
