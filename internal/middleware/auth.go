@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"github.com/PiotrIzw/webstore-grcp/internal/service"
 	"github.com/PiotrIzw/webstore-grcp/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -11,7 +10,7 @@ import (
 )
 
 // AuthInterceptor is a gRPC interceptor for authentication and authorization.
-func AuthInterceptor(rolesService *service.RolesService) grpc.UnaryServerInterceptor {
+func AuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 		if info.FullMethod == "/account.AccountService/CreateAccount" || info.FullMethod == "/account.AccountService/Login" {
@@ -39,7 +38,7 @@ func AuthInterceptor(rolesService *service.RolesService) grpc.UnaryServerInterce
 		ctx = context.WithValue(ctx, "user_id", userID)
 
 		// Authorize the request (if required)
-		//if err := service.Authorize(ctx, rolesService, "accounts:read"); err != nil {
+		//if err := s.authorizer.Authorize(ctx, "accounts:read"); err != nil {
 		//	return nil, err
 		//}
 

@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/PiotrIzw/webstore-grcp/internal/middleware/authorizer"
 	"github.com/PiotrIzw/webstore-grcp/internal/pb"
 	"github.com/PiotrIzw/webstore-grcp/internal/repository"
 	"io"
@@ -14,15 +15,17 @@ import (
 
 type FileService struct {
 	pb.UnimplementedFileServiceServer
-	repo repository.FileRepository
+	authorizer *authorizer.Authorizer
+	repo       repository.FileRepository
 }
 
-func NewFileService(repo repository.FileRepository) *FileService {
-	return &FileService{repo: repo}
+func NewFileService(repo repository.FileRepository, authorizer *authorizer.Authorizer) *FileService {
+	return &FileService{repo: repo, authorizer: authorizer}
 }
 
 // UploadFile handles chunked file uploads.
 func (s *FileService) UploadFile(stream pb.FileService_UploadFileServer) error {
+
 	var (
 		fileData     []byte
 		fileType     string

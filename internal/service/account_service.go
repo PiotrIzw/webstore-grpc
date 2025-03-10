@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/PiotrIzw/webstore-grcp/internal/account"
+	"github.com/PiotrIzw/webstore-grcp/internal/middleware/authorizer"
 	"github.com/PiotrIzw/webstore-grcp/internal/pb"
 	"github.com/PiotrIzw/webstore-grcp/internal/repository"
 	"github.com/PiotrIzw/webstore-grcp/pkg/auth"
@@ -14,15 +15,15 @@ import (
 )
 
 type AccountService struct {
-	repo         repository.AccountRepository
-	rolesService *RolesService
+	repo       repository.AccountRepository
+	authorizer *authorizer.Authorizer
 	pb.UnimplementedAccountServiceServer
 }
 
-func NewAccountService(repo repository.AccountRepository, rolesService *RolesService) *AccountService {
+func NewAccountService(repo repository.AccountRepository, authorizer *authorizer.Authorizer) *AccountService {
 	return &AccountService{
-		repo:         repo,
-		rolesService: rolesService, // Inject RolesService
+		repo:       repo,
+		authorizer: authorizer,
 	}
 }
 
@@ -55,7 +56,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *pb.CreateAccoun
 
 func (s *AccountService) GetAccount(ctx context.Context, req *pb.GetAccountRequest) (*pb.GetAccountResponse, error) {
 	// Authorize the request using the injected RolesService
-	if err := Authorize(ctx, s.rolesService, "accounts:read"); err != nil {
+	if err := s.authorizer.Authorize(ctx, "accounts:read"); err != nil {
 		return nil, err
 	}
 
@@ -77,6 +78,10 @@ func (s *AccountService) GetAccount(ctx context.Context, req *pb.GetAccountReque
 
 // UpdateAccount updates an existing account.
 func (s *AccountService) UpdateAccount(ctx context.Context, req *pb.UpdateAccountRequest) (*pb.UpdateAccountResponse, error) {
+	if err := s.authorizer.Authorize(ctx, "accounts:write"); err != nil {
+		return nil, err
+	}
+
 	// Retrieve the existing account
 	acc, err := s.repo.GetAccount(req.AccountId)
 	if err != nil {
@@ -102,6 +107,10 @@ func (s *AccountService) UpdateAccount(ctx context.Context, req *pb.UpdateAccoun
 
 // DeleteAccount deletes an account by ID.
 func (s *AccountService) DeleteAccount(ctx context.Context, req *pb.DeleteAccountRequest) (*pb.DeleteAccountResponse, error) {
+	if err := s.authorizer.Authorize(ctx, "accounts:write"); err != nil {
+		return nil, err
+	}
+
 	err := s.repo.DeleteAccount(req.AccountId)
 	if err != nil {
 		return nil, err

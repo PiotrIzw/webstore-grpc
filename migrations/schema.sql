@@ -23,7 +23,7 @@ CREATE TABLE roles (
 
 -- Insert default roles
 INSERT INTO roles (name, permissions) VALUES
-      ('admin', ARRAY['accounts:read', 'accounts:write', 'orders:read', 'orders:write', 'preferences:read', 'preferences:write']),
+      ('admin', ARRAY['accounts:read', 'accounts:write', 'orders:read', 'orders:write', 'preferences:read', 'preferences:write', 'roles:write']),
       ('user', ARRAY['accounts:read', 'orders:read', 'preferences:read']),
       ('guest', ARRAY['accounts:read']);
 
