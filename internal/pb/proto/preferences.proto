@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package preferences;
+
+option go_package= "github.com/PiotrIzw/webstore-grcp/internal/pb";
+
+service PreferencesService {
+  rpc UpdatePreferences (UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
+  rpc GetPreferences (GetPreferencesRequest) returns (GetPreferencesResponse);
+}
+
+message UpdatePreferencesRequest {
+  string user_id = 1;
+  string theme = 2;
+  bool notifications = 3;
+  string locale = 4;
+}
+
+message UpdatePreferencesResponse {
+  bool success = 1;
+}
+
+message GetPreferencesRequest {
+  string user_id = 1;
+}
+
+message GetPreferencesResponse {
+  string theme = 1;
+  bool notifications = 2;
+  string locale = 3;
+}

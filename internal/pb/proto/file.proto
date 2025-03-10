@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package file;
+
+option go_package= "github.com/PiotrIzw/webstore-grcp/internal/pb";
+
+service FileService {
+  rpc UploadFile (stream UploadFileRequest) returns (UploadFileResponse);
+}
+
+message UploadFileRequest {
+  bytes data = 1;
+  string file_name = 2;
+  string file_type = 3;
+}
+
+message UploadFileResponse {
+  string file_id = 1;
+}

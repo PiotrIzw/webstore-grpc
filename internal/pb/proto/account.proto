@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package account;
+
+option go_package= "github.com/PiotrIzw/webstore-grcp/internal/pb";
+
+service AccountService {
+  rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse);
+  rpc GetAccount (GetAccountRequest) returns (GetAccountResponse);
+  rpc UpdateAccount (UpdateAccountRequest) returns (UpdateAccountResponse);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+}
+
+message CreateAccountRequest{
+  string username = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message CreateAccountResponse{
+  string account_id = 1;
+}
+
+message GetAccountRequest{
+  string account_id = 1;
+}
+
+message GetAccountResponse {
+  string username = 1;
+  string email = 2;
+  string status = 3;
+}
+
+message UpdateAccountRequest {
+  string account_id = 1;
+  string username = 2;
+  string email = 3;
+  string password = 4;
+
+}
+
+message UpdateAccountResponse {
+  string account_id = 1;
+  bool success = 2;
+}
+
+message DeleteAccountRequest {
+  string account_id = 1;
+
+}
+
+message DeleteAccountResponse {
+  bool success = 1;
+
+}

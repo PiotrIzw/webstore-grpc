@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package roles;
+
+option go_package= "github.com/PiotrIzw/webstore-grcp/internal/pb";
+
+service RolesService {
+  rpc AssignRole (AssignRoleRequest) returns (AssignRoleResponse);
+  rpc RevokeRole (RevokeRoleRequest) returns (RevokeRoleResponse);
+  rpc CheckPermission (CheckPermissionRequest) returns (CheckPermissionResponse);
+}
+
+message AssignRoleRequest {
+  string user_id = 1;
+  string role_name = 2;
+}
+
+message AssignRoleResponse {
+  bool success = 1;
+}
+
+message RevokeRoleRequest {
+  string user_id = 1;
+  string role_name = 2;
+}
+
+message RevokeRoleResponse {
+  bool success = 1;
+}
+
+message CheckPermissionRequest {
+  string user_id = 1;
+  string permission = 2;
+}
+
+message CheckPermissionResponse {
+  bool allowed = 1;
+}
