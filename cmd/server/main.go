@@ -29,7 +29,9 @@ func main() {
 
 	authInterceptor := middleware.AuthInterceptor(rolesService)
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor))
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(authInterceptor),
+		grpc.StreamInterceptor(middleware.StreamAuthInterceptor()))
 	pb.RegisterAccountServiceServer(grpcServer, accountService)
 
 	preferencesRepo := repository.NewPreferencesRepository(db)
